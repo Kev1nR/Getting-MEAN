@@ -24,13 +24,15 @@ var sendJsonResponse = function(res, status, content) {
 module.exports.locationsListByDistance = function(req, res) {
     var lng = parseFloat(req.query.lng);
     var lat = parseFloat(req.query.lat);
+    var maxDist = parseFloat(req.query.maxDistance);
+
     var point = {
         type: "Point",
         coordinates: [lng, lat]
     };
     var geoOptions = {
         spherical: true,
-        maxDistance: theEarth.getRadsFromDistance(20),
+        maxDistance: maxDist * 1000, //assume we're getting kms
         num: 10
     };
 
@@ -47,7 +49,7 @@ module.exports.locationsListByDistance = function(req, res) {
         } else {
             results.forEach(function(doc) {
                 locations.push({
-                    distance: theEarth.getDistanceFromRadians(doc.dis),
+                    distance: doc.dis, //as we get answer back in metres
                     name: doc.obj.name,
                     address: doc.obj.address,
                     rating: doc.obj.rating,

@@ -1,13 +1,20 @@
-/* GET homeList page */
-module.exports.homeList = function(req, res, next) {
+var request = require('request');
+
+var apiOptions = { server : "http://localhost:3000/" };
+if (process.env.NODE_ENV === 'production') {
+  apiOptions.server = "https://glacial-crag-39837.herokuapp.com/";
+}
+
+var renderHomepage = function(req, res, responseBody){
   res.render('locations-list', { 
-    title: 'Loc8r - find a place to work with wifi',
+    title: 'Loc8rX - find a place to work with wifi',
     pageHeader: {
       title: 'Loc8r',
       strapline: 'Find a place to work with wifi near you!'
     },
     sidebar: "Looking for wifi and a seat? Loc8r helps you find places to work when out and about. Perhaps with coffee, cake or a pint? Let Loc8r help you find the place you're looking for.",
-    locations: [{
+    locations: responseBody
+    /*[{
         name: 'Starcups',
         address: '125 High Street, Reading, RG6 1PS',
         rating: 3,
@@ -25,8 +32,49 @@ module.exports.homeList = function(req, res, next) {
         rating: 2,
         facilities: ['Food', 'Premium wifi'],
         distance: '250m'
-    }]
+    }]*/
  });
+}
+
+var formatDistance = function(distance) {
+  var numDistance, unit;
+  
+  if (distance <= 1000) {
+    numDistance = parseFloat(distance).toFixed(1);
+    unit = 'm';
+  } else {
+    numDistance = parseInt(distance / 1000, 10);
+    unit = 'km';
+  }
+  return numDistance + unit;
+};
+
+/* GET homeList page */
+module.exports.homeList = function(req, res, next) {
+  var requestOptions, path;
+
+  path = 'api/locations';
+  requestOptions = {
+    url: apiOptions.server + path,
+    method: 'GET',
+    json: {},
+    qs: { 
+      lng: -0.7992599,
+      lat : 51.378091,
+      maxDistance : 20
+    } 
+  };
+  request (
+    requestOptions,
+    function(err, response, body) {
+      var i, data;
+      data = body;
+
+      for (i = 0; i < data.length; i++)
+        data[i].distance = formatDistance(data[i].distance);
+
+      renderHomepage(req, res, data);
+    });  
 };
 
 /* GET Location info page */
